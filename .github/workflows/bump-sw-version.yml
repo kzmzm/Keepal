@@ -1,0 +1,34 @@
+name: sw.js バージョン自動更新
+
+on:
+  push:
+    paths:
+      - 'index.html'   # index.html が変更されたときだけ実行
+
+jobs:
+  bump-sw-version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # リポジトリへの書き込み権限
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: sw.js のバージョン番号を1つ上げる
+        run: |
+          # 現在のバージョン番号を取得 (例: docman-v3 → 3)
+          CURRENT=$(grep -oP "(?<=docman-v)\d+" sw.js)
+          NEXT=$((CURRENT + 1))
+          echo "現在のバージョン: v${CURRENT} → 新バージョン: v${NEXT}"
+
+          # sw.js の該当行を書き換え
+          sed -i "s/docman-v${CURRENT}/docman-v${NEXT}/g" sw.js
+
+      - name: 変更をコミット＆プッシュ
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add sw.js
+          git diff --staged --quiet || git commit -m "🤖 sw.js バージョン自動更新（index.html 更新に伴う）"
+          git push
