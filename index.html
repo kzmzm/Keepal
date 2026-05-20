@@ -122,10 +122,10 @@ input,select{font-family:inherit;-webkit-appearance:none}
 .empty-state p{font-size:14px;text-align:center;line-height:1.6}
 
 /* ── Sheet (Bottom sheet for mobile) ── */
-.sheet-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:400;opacity:0;transition:opacity .25s;pointer-events:none}
-.sheet-backdrop.visible{opacity:1;pointer-events:auto}
-.sheet{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-radius:20px 20px 0 0;z-index:401;transform:translateY(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);padding-bottom:var(--safe-bottom);max-height:92vh;display:flex;flex-direction:column}
-.sheet.open{transform:translateY(0)}
+.sheet-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:400;opacity:0;transition:opacity .25s;pointer-events:none;display:none}
+.sheet-backdrop.visible{opacity:1;pointer-events:auto;display:block}
+.sheet{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-radius:20px 20px 0 0;z-index:401;transform:translateY(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);padding-bottom:var(--safe-bottom);max-height:92vh;display:none;flex-direction:column}
+.sheet.open{transform:translateY(0);display:flex}
 .sheet-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:10px auto 6px}
 .sheet-hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 18px 12px;flex-shrink:0}
 .sheet-hdr h2{font-size:15px;font-weight:700;display:flex;align-items:center;gap:7px}
@@ -211,8 +211,8 @@ input,select{font-family:inherit;-webkit-appearance:none}
   .sidebar{display:flex}
   .bottom-nav{display:none!important}
   .toast{bottom:24px}
-  .sheet{border-radius:14px;left:50%;right:auto;bottom:auto;top:50%;transform:translate(-50%,-50%) translateY(30px);width:100%;max-width:480px;max-height:90vh}
-  .sheet.open{transform:translate(-50%,-50%)}
+  .sheet{border-radius:14px;left:50%;right:auto;bottom:auto;top:50%;transform:translate(-50%,-50%) translateY(30px);width:100%;max-width:480px;max-height:90vh;display:none}
+  .sheet.open{transform:translate(-50%,-50%);display:flex}
   .sheet-backdrop.visible{display:flex;align-items:center;justify-content:center}
   .sheet-footer{padding-bottom:14px}
   .doc-list{padding:14px 18px}
@@ -523,16 +523,30 @@ async function loadDocs(){docs=await dbGetAll('docs');nextId=docs.length?Math.ma
 let activeSheets=[];
 function openSheet(id){
   const el=document.getElementById(id);
-  el.classList.add('open');
-  document.getElementById('sheet-backdrop').classList.add('visible');
+  el.style.display='flex';
+  requestAnimationFrame(()=>el.classList.add('open'));
+  document.getElementById('sheet-backdrop').style.display='block';
+  requestAnimationFrame(()=>document.getElementById('sheet-backdrop').classList.add('visible'));
   if(!activeSheets.includes(id))activeSheets.push(id);
 }
 function closeSheet(id){
-  document.getElementById(id).classList.remove('open');
+  const el=document.getElementById(id);
+  el.classList.remove('open');
   activeSheets=activeSheets.filter(s=>s!==id);
-  if(!activeSheets.length)document.getElementById('sheet-backdrop').classList.remove('visible');
+  if(!activeSheets.length){
+    document.getElementById('sheet-backdrop').classList.remove('visible');
+    setTimeout(()=>{
+      if(!activeSheets.length)document.getElementById('sheet-backdrop').style.display='none';
+    },260);
+  }
+  setTimeout(()=>{if(!el.classList.contains('open'))el.style.display='none'},280);
 }
-function closeAllSheets(){[...activeSheets].forEach(closeSheet)}
+function closeAllSheets(){
+  document.querySelectorAll('.sheet').forEach(s=>{s.classList.remove('open');s.style.display='none'});
+  const bd=document.getElementById('sheet-backdrop');
+  bd.classList.remove('visible');bd.style.display='none';
+  activeSheets=[];
+}
 
 // ── Toast ──
 function showToast(msg,loading=true){
@@ -858,8 +872,9 @@ if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch((
 
 // ── Init ──
 // 起動時に全シートを強制クローズ（キャッシュ残存対策）
-document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('open'));
-document.getElementById('sheet-backdrop').classList.remove('visible');
+document.querySelectorAll('.sheet').forEach(s=>{s.classList.remove('open');s.style.display='none'});
+const _bd=document.getElementById('sheet-backdrop');
+_bd.classList.remove('visible');_bd.style.display='none';
 activeSheets=[];
 
 openDB().then(async()=>{
