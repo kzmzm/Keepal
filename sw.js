@@ -1,4 +1,4 @@
-const CACHE_NAME = 'docman-v7';
+const CACHE_NAME = 'docman-v9';
 const ASSETS = [
   './',
   './index.html',
