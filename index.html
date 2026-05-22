@@ -226,6 +226,65 @@ input,select{font-family:inherit;-webkit-appearance:none}
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:10px}
+
+/* ── Camera Sheet ── */
+.camera-preview{width:100%;border-radius:12px;overflow:hidden;background:#000;aspect-ratio:4/3;position:relative;display:flex;align-items:center;justify-content:center}
+.camera-preview video{width:100%;height:100%;object-fit:cover}
+.camera-preview canvas{display:none}
+.cam-btns{display:flex;gap:10px;justify-content:center;align-items:center}
+.btn-shutter{width:64px;height:64px;border-radius:50%;background:#fff;border:4px solid var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.btn-shutter svg{width:28px;height:28px;stroke:var(--accent);fill:none;stroke-width:2}
+.btn-shutter:active{transform:scale(.93)}
+.btn-cam-sub{width:44px;height:44px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center}
+.btn-cam-sub svg{width:20px;height:20px;stroke:var(--text2);fill:none;stroke-width:1.8}
+.captured-thumbs{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.captured-thumb{width:60px;height:60px;border-radius:8px;object-fit:cover;border:2px solid var(--border)}
+.captured-thumb.selected{border-color:var(--accent)}
+.cam-count-badge{position:absolute;top:10px;right:10px;background:var(--accent);color:#fff;border-radius:20px;font-size:12px;font-weight:700;padding:3px 10px}
+
+/* ── PIN Lock ── */
+.pin-screen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:24px}
+.pin-screen.active{display:flex}
+.pin-logo{width:56px;height:56px;background:var(--accent);border-radius:16px;display:flex;align-items:center;justify-content:center}
+.pin-logo svg{width:28px;height:28px;fill:white}
+.pin-title{font-size:17px;font-weight:700;color:var(--text)}
+.pin-subtitle{font-size:13px;color:var(--text3)}
+.pin-dots{display:flex;gap:14px}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border2);background:transparent;transition:background .15s}
+.pin-dot.filled{background:var(--accent);border-color:var(--accent)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:240px}
+.pin-key{height:64px;border-radius:16px;border:1px solid var(--border);background:var(--surface);font-size:22px;font-weight:500;color:var(--text);display:flex;align-items:center;justify-content:center;transition:background .1s}
+.pin-key:active{background:var(--surface2)}
+.pin-key.del{font-size:16px;color:var(--text2)}
+.pin-key.empty{border:none;background:transparent;pointer-events:none}
+.pin-error{font-size:13px;color:var(--danger);height:18px}
+.pin-biometric{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--accent);background:transparent;border:none;padding:8px}
+.pin-biometric svg{width:20px;height:20px;stroke:var(--accent);fill:none;stroke-width:1.8}
+
+/* ── Reminder badge ── */
+.reminder-badge{font-size:10px;padding:1px 6px;border-radius:20px;font-weight:700;flex-shrink:0}
+.reminder-badge.urgent{background:#fcebeb;color:#a32d2d}
+.reminder-badge.soon{background:#faeeda;color:#854f0b}
+.reminder-section{background:var(--warn-bg);border:1px solid var(--warn-border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.reminder-row{display:flex;align-items:center;gap:8px;font-size:13px}
+.reminder-icon{font-size:18px;flex-shrink:0}
+.reminder-text{flex:1;color:var(--text)}
+.reminder-date{font-size:11px;color:var(--text3)}
+
+/* ── Notification banner ── */
+#reminder-banner{display:none;align-items:center;gap:10px;padding:9px 16px;background:#faeeda;border-bottom:1px solid #e4c97a;font-size:13px;color:#633806;cursor:pointer}
+#reminder-banner.visible{display:flex}
+#reminder-banner svg{width:18px;height:18px;stroke:#854f0b;fill:none;flex-shrink:0}
+
+/* ── Settings Sheet ── */
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)}
+.settings-row:last-child{border-bottom:none}
+.settings-lbl{font-size:14px;color:var(--text)}
+.settings-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.toggle{width:44px;height:26px;border-radius:20px;border:none;background:var(--border2);position:relative;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--accent)}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle.on::after{transform:translateX(18px)}
 </style>
 </head>
 <body>
@@ -239,13 +298,13 @@ input,select{font-family:inherit;-webkit-appearance:none}
 <div class="banner" id="apikey-banner">
   <span>⚠️ AI分類にはAPIキーが必要：</span>
   <input type="password" id="apikey-input" placeholder="sk-ant-...">
-  <button class="save-btn" onclick="saveApiKey()">保存</button>
-  <button class="banner-x" onclick="this.closest('.banner').classList.remove('visible')">×</button>
+  <button class="save-btn" data-action="saveApiKey()">保存</button>
+  <button class="banner-x" data-action="this.closest('.banner').classList.remove('visible')">×</button>
 </div>
 <div class="banner" id="install-banner">
   <span>このアプリをインストールできます</span>
   <button class="btn-install" id="btn-install">インストール</button>
-  <button class="banner-x" onclick="this.closest('.banner').classList.remove('visible')">×</button>
+  <button class="banner-x" data-action="this.closest('.banner').classList.remove('visible')">×</button>
 </div>
 
 <div class="topbar">
@@ -254,10 +313,13 @@ input,select{font-family:inherit;-webkit-appearance:none}
     <span class="logo-name">書類管理</span>
   </div>
   <div class="topbar-right">
-    <button class="icon-btn" onclick="openCatSettings()" title="カテゴリ設定">
+    <button class="icon-btn" data-action="openSheet('settings-sheet')" title="設定">
+      <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+    </button>
+    <button class="icon-btn" data-action="openCatSettings()" title="カテゴリ設定">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     </button>
-    <button class="btn-add-top" onclick="openAdd()">
+    <button class="btn-add-top" data-action="openAdd()">
       <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
       追加
     </button>
@@ -267,7 +329,7 @@ input,select{font-family:inherit;-webkit-appearance:none}
 <div class="search-bar">
   <div class="search-inner">
     <svg viewBox="0 0 24 24"><path d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
-    <input type="search" id="search-input" placeholder="ファイル名・発行元・メモを検索…" oninput="render()">
+    <input type="search" id="search-input" placeholder="ファイル名・発行元・メモを検索…" id="search-input">
   </div>
 </div>
 
@@ -276,9 +338,9 @@ input,select{font-family:inherit;-webkit-appearance:none}
   <div class="main">
     <div class="toolbar">
       <span class="sort-lbl">並び順：</span>
-      <button class="sort-btn active" id="s-date" onclick="setSort('date')">日付</button>
-      <button class="sort-btn" id="s-name" onclick="setSort('name')">名前</button>
-      <button class="sort-btn" id="s-size" onclick="setSort('size')">サイズ</button>
+      <button class="sort-btn active" id="s-date" data-action="setSort('date')">日付</button>
+      <button class="sort-btn" id="s-name" data-action="setSort('name')">名前</button>
+      <button class="sort-btn" id="s-size" data-action="setSort('size')">サイズ</button>
       <span class="doc-cnt" id="doc-cnt"></span>
     </div>
     <div class="doc-list" id="doc-list"></div>
@@ -288,19 +350,23 @@ input,select{font-family:inherit;-webkit-appearance:none}
 <!-- Bottom Nav (mobile only) -->
 <div class="bottom-nav">
   <div class="bottom-nav-inner">
-    <button class="bnav-btn active" id="bnav-all" onclick="mobileNavCat('all')">
+    <button class="bnav-btn active" id="bnav-all" data-action="mobileNavCat('all')">
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       すべて
     </button>
-    <button class="bnav-btn" id="bnav-upload" onclick="triggerFileInput()">
+    <button class="bnav-btn" id="bnav-camera" data-action="openCamera()">
+      <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      スキャン
+    </button>
+    <button class="bnav-btn" id="bnav-upload" data-action="triggerFileInput()">
       <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       保管
     </button>
-    <button class="bnav-btn" id="bnav-cats" onclick="openMobileCats()">
+    <button class="bnav-btn" id="bnav-cats" data-action="openMobileCats()">
       <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
       カテゴリ
     </button>
-    <button class="bnav-btn" id="bnav-add" onclick="openAdd()">
+    <button class="bnav-btn" id="bnav-add" data-action="openAdd()">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
       手動追加
     </button>
@@ -308,9 +374,119 @@ input,select{font-family:inherit;-webkit-appearance:none}
 </div>
 <input type="file" id="mobile-file-input" multiple style="display:none">
 
+
+<!-- PIN Lock Screen -->
+<div class="pin-screen" id="pin-screen">
+  <div class="pin-logo"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg></div>
+  <div class="pin-title">書類管理</div>
+  <div class="pin-subtitle" id="pin-subtitle">PINを入力してください</div>
+  <div class="pin-dots" id="pin-dots">
+    <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
+    <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+  </div>
+  <div class="pin-error" id="pin-error"></div>
+  <div class="pin-pad" id="pin-pad">
+    <button class="pin-key" data-action="pinInput('1')">1</button>
+    <button class="pin-key" data-action="pinInput('2')">2</button>
+    <button class="pin-key" data-action="pinInput('3')">3</button>
+    <button class="pin-key" data-action="pinInput('4')">4</button>
+    <button class="pin-key" data-action="pinInput('5')">5</button>
+    <button class="pin-key" data-action="pinInput('6')">6</button>
+    <button class="pin-key" data-action="pinInput('7')">7</button>
+    <button class="pin-key" data-action="pinInput('8')">8</button>
+    <button class="pin-key" data-action="pinInput('9')">9</button>
+    <button class="pin-key empty"></button>
+    <button class="pin-key" data-action="pinInput('0')">0</button>
+    <button class="pin-key del" data-action="pinDel()">⌫</button>
+  </div>
+  <button class="pin-biometric" id="btn-biometric" data-action="tryBiometric()" style="display:none">
+    <svg viewBox="0 0 24 24"><path d="M12 1C5.9 1 1 5.9 1 12s4.9 11 11 11 11-4.9 11-11S18.1 1 12 1zm0 2c5 0 9 4 9 9s-4 9-9 9-9-4-9-9 4-9 9-9z"/><path d="M12 6c-3.3 0-6 2.7-6 6 0 1.7.7 3.2 1.8 4.3l1.4-1.4C8.5 14.1 8 13.1 8 12c0-2.2 1.8-4 4-4s4 1.8 4 4c0 1.1-.5 2.1-1.2 2.8l1.4 1.4C17.3 15.2 18 13.7 18 12c0-3.3-2.7-6-6-6z"/><circle cx="12" cy="12" r="2"/></svg>
+    Face ID / Touch IDで認証
+  </button>
+</div>
+
+<!-- Reminder Banner -->
+<div id="reminder-banner" data-action="openReminders()">
+  <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+  <span id="reminder-banner-text">期限が近い書類があります</span>
+</div>
+
+<!-- Camera Sheet -->
+<div class="sheet" id="camera-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-hdr">
+    <h2>📷 スキャン</h2>
+    <button class="sheet-x" data-action="closeCamera()"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <div class="camera-preview">
+      <video id="cam-video" autoplay playsinline muted></video>
+      <canvas id="cam-canvas"></canvas>
+      <div class="cam-count-badge" id="cam-count" style="display:none">0枚</div>
+    </div>
+    <div class="cam-btns">
+      <button class="btn-cam-sub" data-action="switchCamera()" title="カメラ切り替え">
+        <svg viewBox="0 0 24 24"><path d="M20 7h-9m3-3-3 3 3 3M4 17h9m-3 3 3-3-3-3"/></svg>
+      </button>
+      <button class="btn-shutter" data-action="capturePhoto()">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="var(--accent)"/></svg>
+      </button>
+      <button class="btn-cam-sub" data-action="finishCapture()" title="完了" id="btn-cam-done" style="display:none">
+        <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+      </button>
+    </div>
+    <div class="captured-thumbs" id="captured-thumbs"></div>
+    <p style="font-size:12px;color:var(--text3);text-align:center">シャッターを押して撮影。複数枚まとめて1書類にできます。</p>
+    <div style="height:8px"></div>
+  </div>
+  <div class="sheet-footer">
+    <button class="btn-cancel" data-action="closeCamera()">キャンセル</button>
+    <button class="btn-save" id="btn-cam-save" data-action="finishCapture()" style="display:none">AIで分類して保存</button>
+  </div>
+</div>
+
+<!-- Reminders Sheet -->
+<div class="sheet" id="reminder-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-hdr">
+    <h2>🔔 リマインダー</h2>
+    <button class="sheet-x" data-action="closeSheet('reminder-sheet')"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button>
+  </div>
+  <div class="sheet-body" id="reminder-list">
+  </div>
+</div>
+
+<!-- Settings Sheet -->
+<div class="sheet" id="settings-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-hdr">
+    <h2>⚙️ 設定</h2>
+    <button class="sheet-x" data-action="closeSheet('settings-sheet')"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <div class="settings-row">
+      <div><div class="settings-lbl">🔒 PINロック</div><div class="settings-sub">アプリ起動時にPINを要求</div></div>
+      <button class="toggle" id="toggle-pin" data-action="togglePinSetting()"></button>
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-lbl">🔔 リマインダー通知</div><div class="settings-sub">期限が近い書類を通知</div></div>
+      <button class="toggle" id="toggle-notif" data-action="toggleNotifSetting()"></button>
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-lbl">🤖 AIキー設定</div><div class="settings-sub" id="set-apikey-status">未設定</div></div>
+      <button class="btn-save" style="padding:7px 14px;font-size:12px" data-action="closeSheet('settings-sheet');document.getElementById('apikey-banner').classList.add('visible')">設定</button>
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-lbl">🗑️ データをリセット</div><div class="settings-sub">全書類・設定を削除</div></div>
+      <button style="background:var(--danger-bg);border:1px solid var(--danger);color:var(--danger);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:500" data-action="resetAllData()">リセット</button>
+    </div>
+    <div style="height:8px"></div>
+  </div>
+</div>
+
 <!-- ── Sheets ── -->
 <!-- Backdrop -->
-<div class="sheet-backdrop" id="sheet-backdrop" onclick="closeAllSheets()"></div>
+<div class="sheet-backdrop" id="sheet-backdrop" data-action="closeAllSheets()"></div>
 
 <!-- Add Sheet -->
 <div class="sheet" id="add-sheet">
@@ -320,7 +496,7 @@ input,select{font-family:inherit;-webkit-appearance:none}
       <svg id="modal-ai-icon" viewBox="0 0 24 24" width="16" height="16" style="display:none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="var(--accent)"/></svg>
       <span id="sheet-ttl">ファイルを追加</span>
     </h2>
-    <button class="sheet-x" onclick="closeSheet('add-sheet')"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button>
+    <button class="sheet-x" data-action="closeSheet('add-sheet')"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button>
   </div>
   <div class="sheet-body">
     <div id="ai-sec" style="display:none">
@@ -353,11 +529,16 @@ input,select{font-family:inherit;-webkit-appearance:none}
       <label class="form-lbl">メモ（任意）</label>
       <input class="form-inp" id="f-memo" type="text" placeholder="例：確定申告用">
     </div>
+    <div class="form-field">
+      <label class="form-lbl">⏰ リマインダー日（任意）</label>
+      <input class="form-inp" id="f-reminder" type="date">
+      <span style="font-size:11px;color:var(--text3);margin-top:3px">保証期限・申告期限などを設定すると通知します</span>
+    </div>
     <div style="height:8px"></div>
   </div>
   <div class="sheet-footer">
-    <button class="btn-cancel" onclick="closeSheet('add-sheet')">キャンセル</button>
-    <button class="btn-save" onclick="saveDoc()">保存する</button>
+    <button class="btn-cancel" data-action="closeSheet('add-sheet')">キャンセル</button>
+    <button class="btn-save" data-action="saveDoc()">保存する</button>
   </div>
 </div>
 
@@ -366,7 +547,7 @@ input,select{font-family:inherit;-webkit-appearance:none}
   <div class="sheet-handle"></div>
   <div class="sheet-hdr">
     <h2><span id="d-sheet-ttl">詳細</span></h2>
-    <button class="sheet-x" onclick="closeSheet('detail-sheet')"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button>
+    <button class="sheet-x" data-action="closeSheet('detail-sheet')"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button>
   </div>
   <div class="sheet-body">
     <div class="d-file-icon" id="d-icon"></div>
@@ -379,22 +560,23 @@ input,select{font-family:inherit;-webkit-appearance:none}
       <div class="d-row"><span class="d-key">サイズ</span><span class="d-val" id="d-size"></span></div>
       <div class="d-row"><span class="d-key">登録日</span><span class="d-val" id="d-created"></span></div>
       <div class="d-row"><span class="d-key">分類</span><span class="d-val" id="d-ai"></span></div>
+      <div class="d-row" id="d-reminder-row" style="display:none"><span class="d-key">⏰ 期限</span><span class="d-val" id="d-reminder"></span></div>
     </div>
     <div id="d-memo-sec" style="display:none">
       <div class="d-sec-lbl">メモ</div>
       <div class="d-memo" id="d-memo"></div>
     </div>
     <div class="detail-action-row" id="d-file-actions" style="display:none">
-      <button class="btn-file-action" onclick="openFile()">
+      <button class="btn-file-action" data-action="openFile()">
         <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
         開く
       </button>
-      <button class="btn-file-action" onclick="downloadFile()">
+      <button class="btn-file-action" data-action="downloadFile()">
         <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         ダウンロード
       </button>
     </div>
-    <button class="btn-del-full" onclick="deleteDoc()">
+    <button class="btn-del-full" data-action="deleteDoc()">
       <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
       このファイルを削除
     </button>
@@ -407,26 +589,26 @@ input,select{font-family:inherit;-webkit-appearance:none}
   <div class="sheet-handle"></div>
   <div class="sheet-hdr">
     <h2>カテゴリ設定</h2>
-    <button class="sheet-x" onclick="closeSheet('cat-sheet')"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button>
+    <button class="sheet-x" data-action="closeSheet('cat-sheet')"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button>
   </div>
   <div class="sheet-body">
     <p style="font-size:12px;color:var(--text3)">カテゴリ名・色を自由に変更・追加・削除できます。</p>
     <div class="cat-set-list" id="cat-set-list"></div>
-    <button class="btn-add-cat" onclick="addNewCat()">
+    <button class="btn-add-cat" data-action="addNewCat()">
       <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>カテゴリを追加
     </button>
     <div style="height:8px"></div>
   </div>
   <div class="sheet-footer">
-    <button class="btn-cancel" onclick="closeSheet('cat-sheet')">閉じる</button>
-    <button class="btn-save" onclick="saveCatSettings()">保存する</button>
+    <button class="btn-cancel" data-action="closeSheet('cat-sheet')">閉じる</button>
+    <button class="btn-save" data-action="saveCatSettings()">保存する</button>
   </div>
 </div>
 
 <!-- Mobile Cat Picker Sheet -->
 <div class="sheet" id="mcat-sheet">
   <div class="sheet-handle"></div>
-  <div class="sheet-hdr"><h2>カテゴリを選択</h2><button class="sheet-x" onclick="closeSheet('mcat-sheet')"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button></div>
+  <div class="sheet-hdr"><h2>カテゴリを選択</h2><button class="sheet-x" data-action="closeSheet('mcat-sheet')"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button></div>
   <div class="sheet-body" id="mcat-list" style="gap:6px"></div>
   <div style="height:calc(12px + var(--safe-bottom))"></div>
 </div>
@@ -650,6 +832,7 @@ async function processSingleFile(file,useAI){
     cat:result?.cat||(CATS[0]?.id||'other'),
     date:result?.date||today(),amount:result?.amount||null,
     issuer:result?.issuer||'',memo:result?.memo||'',
+    reminder:'',
     created:today(),aiClassified:!!result,hasFile:true,
     fileName:file.name,fileType:file.type||'application/octet-stream',fileSize:file.size};
   await dbPut('docs',doc);
@@ -666,6 +849,7 @@ function openAdd(prefill=''){
   document.getElementById('f-amount').value='';
   document.getElementById('f-issuer').value='';
   document.getElementById('f-memo').value='';
+  document.getElementById('f-reminder').value='';
   editCat=CATS[0]?.id||'other';
   renderCatPicker();
   openSheet('add-sheet');
@@ -676,7 +860,7 @@ function renderCatPicker(){
   document.getElementById('cat-picker').innerHTML=CATS.map(c=>`
     <button class="cp-btn ${editCat===c.id?'sel':''}"
       style="${editCat===c.id?`background:${c.bg};color:${c.color};border-color:${c.bg}`:''}"
-      onclick="editCat='${c.id}';renderCatPicker()">${esc(c.label)}</button>`).join('');
+      data-action="editCat='${c.id}';renderCatPicker()">${esc(c.label)}</button>`).join('');
 }
 
 async function saveDoc(){
@@ -689,11 +873,13 @@ async function saveDoc(){
     amount:amt!==''?parseInt(amt):null,
     issuer:document.getElementById('f-issuer').value.trim(),
     memo:document.getElementById('f-memo').value.trim(),
+    reminder:document.getElementById('f-reminder').value||'',
     created:today(),aiClassified:false,hasFile:false,
     fileName:'',fileType:'',fileSize:0};
   await dbPut('docs',doc);
   closeSheet('add-sheet');
   await loadDocs();render();
+  checkReminders();
   toastDone('保存しました');
 }
 
@@ -704,9 +890,9 @@ function closeCatSettings(){closeSheet('cat-sheet')}
 function renderCatSetList(){
   document.getElementById('cat-set-list').innerHTML=tempCats.map((c,i)=>`
     <div class="cat-set-row">
-      <input type="color" class="cs-color" value="${c.color}" onchange="tempCats[${i}].color=this.value;tempCats[${i}].bg=hexToBg(this.value)">
-      <input type="text" class="cs-inp" value="${esc(c.label)}" placeholder="カテゴリ名" oninput="tempCats[${i}].label=this.value">
-      <button class="cs-del" onclick="if(tempCats.length>1){tempCats.splice(${i},1);renderCatSetList()}else alert('カテゴリは1つ以上必要です')">
+      <input type="color" class="cs-color" value="${c.color}" data-color-idx="${i}">
+      <input type="text" class="cs-inp" value="${esc(c.label)}" placeholder="カテゴリ名" data-label-idx="${i}">
+      <button class="cs-del" data-action="if(tempCats.length>1){tempCats.splice(${i},1);renderCatSetList()}else alert('カテゴリは1つ以上必要です')">
         <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
     </div>`).join('');
@@ -729,7 +915,7 @@ function openMobileCats(){
   const el=document.getElementById('mcat-list');
   el.innerHTML=[{id:'all',label:'すべて',color:'#888',bg:'#eee'},...CATS].map(c=>`
     <button style="display:flex;align-items:center;gap:10px;width:100%;padding:12px 10px;border:none;background:${activeCat===c.id?c.bg:'transparent'};border-radius:9px;font-size:14px;color:${activeCat===c.id?c.color:'var(--text2)'};font-weight:${activeCat===c.id?'700':'400'}"
-      onclick="mobileNavCat('${c.id}')">
+      data-action="mobileNavCat('${c.id}')">
       <span style="width:9px;height:9px;border-radius:50%;background:${c.color};flex-shrink:0"></span>
       ${esc(c.label)}
     </button>`).join('');
@@ -764,9 +950,9 @@ function getFiltered(){
 function renderSidebar(){
   const counts={all:docs.length};CATS.forEach(c=>{counts[c.id]=docs.filter(d=>d.cat===c.id).length});
   let h=`<div class="sb-head">カテゴリ</div>
-  <button class="cat-btn ${activeCat==='all'?'active':''}" onclick="setCategory('all')">
+  <button class="cat-btn ${activeCat==='all'?'active':''}" data-action="setCategory('all')">
     <span class="cat-dot" style="background:#888"></span><span class="cat-lbl">すべて</span><span class="cat-cnt">${counts.all}</span></button>`;
-  CATS.forEach(c=>{h+=`<button class="cat-btn ${activeCat===c.id?'active':''}" onclick="setCategory('${c.id}')">
+  CATS.forEach(c=>{h+=`<button class="cat-btn ${activeCat===c.id?'active':''}" data-action="setCategory('${c.id}')">
     <span class="cat-dot" style="background:${c.color}"></span><span class="cat-lbl">${esc(c.label)}</span>
     <span class="cat-cnt">${counts[c.id]||0}</span></button>`});
   document.getElementById('sidebar').innerHTML=h;
@@ -787,7 +973,7 @@ function renderList(){
   }
   list.forEach(d=>{
     const c=catMap[d.cat]||CATS[0]||{color:'#888',bg:'#eee',label:'不明'};
-    const card=document.createElement('div');card.className='doc-card';card.onclick=()=>openDetail(d.id);
+    const card=document.createElement('div');card.className='doc-card';card.addEventListener('click',()=>openDetail(d.id));
     card.innerHTML=`
       <div class="file-icon" style="background:${c.bg}">${fileIcon(d.fileName||d.title)}</div>
       <div class="doc-info">
@@ -838,6 +1024,10 @@ function openDetail(id){
   if(d.memo){ms.style.display='block';document.getElementById('d-memo').textContent=d.memo}else ms.style.display='none';
   const fa=document.getElementById('d-file-actions');
   fa.style.display=d.hasFile?'flex':'none';
+  // リマインダー
+  const rrow=document.getElementById('d-reminder-row');
+  if(d.reminder){rrow.style.display='flex';document.getElementById('d-reminder').textContent=fmtDate(d.reminder)}
+  else rrow.style.display='none';
   openSheet('detail-sheet');
 }
 
@@ -862,6 +1052,372 @@ async function deleteDoc(){
   closeSheet('detail-sheet');render();toastDone('削除しました');
 }
 
+
+// ════════════════════════════════════════
+// ── フェーズ1機能: カメラ・PIN・リマインダー ──
+// ════════════════════════════════════════
+
+// ── Settings ──
+function loadSettings(){return JSON.parse(localStorage.getItem('docman_settings')||'{}')}
+function saveSettings(s){localStorage.setItem('docman_settings',JSON.stringify(s))}
+function initSettings(){
+  const s=loadSettings();
+  document.getElementById('toggle-pin').classList.toggle('on',!!s.pinEnabled);
+  document.getElementById('toggle-notif').classList.toggle('on',!!s.notifEnabled);
+  document.getElementById('set-apikey-status').textContent=getKey()?'設定済み':'未設定';
+}
+function togglePinSetting(){
+  const s=loadSettings();
+  if(s.pinEnabled){
+    if(confirm('PINロックを解除しますか？')){s.pinEnabled=false;s.pin='';saveSettings(s);document.getElementById('toggle-pin').classList.remove('on');toastDone('PINロックを解除しました')}
+  }else{
+    closeSheet('settings-sheet');
+    setTimeout(()=>openPinSetup(),300);
+  }
+}
+function toggleNotifSetting(){
+  const s=loadSettings();
+  s.notifEnabled=!s.notifEnabled;
+  saveSettings(s);
+  document.getElementById('toggle-notif').classList.toggle('on',s.notifEnabled);
+  if(s.notifEnabled){
+    Notification.requestPermission().then(p=>{
+      if(p==='granted')toastDone('通知を有効にしました');
+      else{s.notifEnabled=false;saveSettings(s);document.getElementById('toggle-notif').classList.remove('on');alert('通知の許可が必要です。ブラウザの設定から許可してください。')}
+    });
+  }else toastDone('通知を無効にしました');
+}
+async function resetAllData(){
+  if(!confirm('すべての書類・設定を削除します。この操作は元に戻せません。'))return;
+  const keys=await dbGetAll('docs');
+  for(const d of keys){await dbDel('docs',d.id);await dbDel('files',d.id)}
+  localStorage.removeItem('docman_settings');
+  localStorage.removeItem('docman_cats_v1');
+  localStorage.removeItem('docman_apikey');
+  docs=[];render();closeSheet('settings-sheet');toastDone('リセット完了');
+}
+
+// ── PIN Lock ──
+let pinBuffer='';
+let pinMode='unlock'; // 'unlock' | 'setup' | 'confirm'
+let pinSetupFirst='';
+
+function checkPinOnStart(){
+  const s=loadSettings();
+  if(s.pinEnabled&&s.pin){
+    pinMode='unlock';
+    document.getElementById('pin-subtitle').textContent='PINを入力してください';
+    document.getElementById('pin-screen').classList.add('active');
+    // 生体認証が使えるか確認
+    if(window.PublicKeyCredential){
+      document.getElementById('btn-biometric').style.display='flex';
+    }
+  }
+}
+
+function pinInput(n){
+  if(pinBuffer.length>=4)return;
+  pinBuffer+=n;
+  updatePinDots();
+  if(pinBuffer.length===4)setTimeout(checkPin,150);
+}
+function pinDel(){
+  pinBuffer=pinBuffer.slice(0,-1);
+  updatePinDots();
+  document.getElementById('pin-error').textContent='';
+}
+function updatePinDots(){
+  for(let i=0;i<4;i++){
+    document.getElementById('pd'+i).classList.toggle('filled',i<pinBuffer.length);
+  }
+}
+function checkPin(){
+  const s=loadSettings();
+  if(pinMode==='unlock'){
+    if(pinBuffer===s.pin){
+      document.getElementById('pin-screen').classList.remove('active');
+      pinBuffer='';updatePinDots();
+    }else{
+      document.getElementById('pin-error').textContent='PINが違います';
+      pinBuffer='';updatePinDots();
+      document.getElementById('pin-screen').style.animation='shake .3s';
+      setTimeout(()=>document.getElementById('pin-screen').style.animation='',300);
+    }
+  }else if(pinMode==='setup'){
+    pinSetupFirst=pinBuffer;pinBuffer='';
+    updatePinDots();
+    pinMode='confirm';
+    document.getElementById('pin-subtitle').textContent='もう一度入力してください';
+  }else if(pinMode==='confirm'){
+    if(pinBuffer===pinSetupFirst){
+      s.pin=pinBuffer;s.pinEnabled=true;saveSettings(s);
+      document.getElementById('toggle-pin').classList.add('on');
+      document.getElementById('pin-screen').classList.remove('active');
+      pinBuffer='';updatePinDots();
+      toastDone('PINを設定しました');
+    }else{
+      document.getElementById('pin-error').textContent='PINが一致しません。最初からやり直してください。';
+      pinBuffer='';pinSetupFirst='';pinMode='setup';
+      updatePinDots();
+      document.getElementById('pin-subtitle').textContent='新しいPINを入力してください（4桁）';
+    }
+  }
+}
+function openPinSetup(){
+  pinMode='setup';pinBuffer='';pinSetupFirst='';
+  document.getElementById('pin-subtitle').textContent='新しいPINを入力してください（4桁）';
+  document.getElementById('pin-error').textContent='';
+  updatePinDots();
+  document.getElementById('pin-screen').classList.add('active');
+}
+async function tryBiometric(){
+  try{
+    const cred=await navigator.credentials.get({publicKey:{challenge:new Uint8Array(32),rpId:location.hostname,allowCredentials:[],userVerification:'required',timeout:60000}});
+    if(cred){document.getElementById('pin-screen').classList.remove('active');toastDone('認証成功')}
+  }catch(e){
+    // Face ID/Touch IDは初回登録が必要なため、PINフォールバック
+    document.getElementById('pin-error').textContent='生体認証を使うには事前登録が必要です';
+  }
+}
+
+// ── Camera ──
+let camStream=null;
+let capturedImages=[];
+let facingMode='environment'; // 'environment'=背面 'user'=前面
+
+async function openCamera(){
+  capturedImages=[];
+  renderCapturedThumbs();
+  document.getElementById('btn-cam-done').style.display='none';
+  document.getElementById('btn-cam-save').style.display='none';
+  document.getElementById('cam-count').style.display='none';
+  openSheet('camera-sheet');
+  await startCamera();
+}
+
+async function startCamera(){
+  try{
+    if(camStream)camStream.getTracks().forEach(t=>t.stop());
+    camStream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode,width:{ideal:1920},height:{ideal:1080}},audio:false
+    });
+    document.getElementById('cam-video').srcObject=camStream;
+  }catch(e){
+    alert('カメラへのアクセスが許可されていません。
+ブラウザの設定からカメラを許可してください。');
+    closeCamera();
+  }
+}
+
+function switchCamera(){
+  facingMode=facingMode==='environment'?'user':'environment';
+  startCamera();
+}
+
+function capturePhoto(){
+  const video=document.getElementById('cam-video');
+  const canvas=document.getElementById('cam-canvas');
+  canvas.width=video.videoWidth;
+  canvas.height=video.videoHeight;
+  const ctx=canvas.getContext('2d');
+  ctx.drawImage(video,0,0);
+  const dataUrl=canvas.toDataURL('image/jpeg',0.85);
+  capturedImages.push(dataUrl);
+  renderCapturedThumbs();
+  // シャッターフラッシュ
+  const preview=document.querySelector('.camera-preview');
+  preview.style.background='#fff';
+  setTimeout(()=>preview.style.background='#000',100);
+  if(capturedImages.length>0){
+    document.getElementById('btn-cam-done').style.display='flex';
+    document.getElementById('btn-cam-save').style.display='block';
+    document.getElementById('cam-count').style.display='block';
+    document.getElementById('cam-count').textContent=capturedImages.length+'枚';
+  }
+}
+
+function renderCapturedThumbs(){
+  const el=document.getElementById('captured-thumbs');
+  el.innerHTML=capturedImages.map((img,i)=>`<img class="captured-thumb" src="${img}" data-action="removeCaptured(${i})" title="タップで削除">`).join('');
+}
+
+function removeCaptured(i){
+  capturedImages.splice(i,1);
+  renderCapturedThumbs();
+  if(capturedImages.length===0){
+    document.getElementById('btn-cam-done').style.display='none';
+    document.getElementById('btn-cam-save').style.display='none';
+    document.getElementById('cam-count').style.display='none';
+  }else{
+    document.getElementById('cam-count').textContent=capturedImages.length+'枚';
+  }
+}
+
+async function finishCapture(){
+  if(capturedImages.length===0)return;
+  closeCamera();
+  showToast('AIが画像を解析中…');
+  try{
+    // 画像をBlobに変換
+    const files=await Promise.all(capturedImages.map(async(dataUrl,i)=>{
+      const res=await fetch(dataUrl);
+      const blob=await res.blob();
+      return new File([blob],`scan_${Date.now()}_${i}.jpg`,{type:'image/jpeg'});
+    }));
+    // 複数枚なら1枚目をAI解析に使用
+    const mainFile=files[0];
+    const ab=await mainFile.arrayBuffer();
+    let result=null;
+    if(getKey()){
+      try{result=await classifyFile('',mainFile.name,mainFile.type)}catch(e){}
+    }
+    // 複数枚の場合はまとめて保存
+    const id=nextId++;
+    const doc={id,
+      title:result?.title||`スキャン書類 ${new Date().toLocaleDateString('ja')}`,
+      cat:result?.cat||(CATS[0]?.id||'other'),
+      date:result?.date||today(),
+      amount:result?.amount||null,
+      issuer:result?.issuer||'',
+      memo:result?.memo||(capturedImages.length>1?`${capturedImages.length}枚のスキャン`:''),
+      reminder:'',
+      created:today(),aiClassified:!!result,hasFile:true,
+      fileName:mainFile.name,fileType:'image/jpeg',fileSize:ab.byteLength,
+      scanCount:capturedImages.length};
+    await dbPut('docs',doc);
+    // 最初の画像を保存（複数枚は将来PDF化対応予定）
+    await dbPut('files',{id,data:new Uint8Array(ab),type:'image/jpeg',name:mainFile.name});
+    capturedImages=[];
+    await loadDocs();render();
+    toastDone(`${doc.scanCount>1?doc.scanCount+'枚を':''}AIで分類して保存しました`);
+    checkReminders();
+  }catch(e){
+    console.error(e);
+    hideToast();
+    alert('保存に失敗しました: '+e.message);
+  }
+}
+
+function closeCamera(){
+  if(camStream)camStream.getTracks().forEach(t=>t.stop());
+  camStream=null;
+  closeSheet('camera-sheet');
+}
+
+// ── Reminders ──
+function getReminderDocs(){
+  const now=new Date();
+  const soon=new Date();soon.setDate(soon.getDate()+30);
+  return docs.filter(d=>{
+    if(!d.reminder)return false;
+    const rd=new Date(d.reminder);
+    return rd<=soon;
+  }).sort((a,b)=>new Date(a.reminder)-new Date(b.reminder));
+}
+
+function checkReminders(){
+  const urgent=getReminderDocs();
+  const banner=document.getElementById('reminder-banner');
+  if(urgent.length>0){
+    banner.classList.add('visible');
+    const overdue=urgent.filter(d=>new Date(d.reminder)<new Date()).length;
+    if(overdue>0)document.getElementById('reminder-banner-text').textContent=`⚠️ 期限切れの書類が${overdue}件あります`;
+    else document.getElementById('reminder-banner-text').textContent=`🔔 期限が近い書類が${urgent.length}件あります`;
+    // ブラウザ通知
+    const s=loadSettings();
+    if(s.notifEnabled&&Notification.permission==='granted'){
+      urgent.forEach(d=>{
+        const rd=new Date(d.reminder);
+        const diff=Math.ceil((rd-new Date())/(1000*60*60*24));
+        if(diff<=7&&diff>=0){
+          new Notification('書類管理 - 期限のお知らせ',{
+            body:`「${d.title}」の期限まで${diff}日です`,
+            icon:'icon-192.png'
+          });
+        }
+      });
+    }
+  }else{
+    banner.classList.remove('visible');
+  }
+}
+
+function openReminders(){
+  const rdocs=getReminderDocs();
+  const el=document.getElementById('reminder-list');
+  const now=new Date();
+  if(rdocs.length===0){
+    el.innerHTML='<p style="font-size:13px;color:var(--text3);text-align:center;padding:20px">期限が近い書類はありません</p>';
+  }else{
+    el.innerHTML=rdocs.map(d=>{
+      const rd=new Date(d.reminder);
+      const diff=Math.ceil((rd-now)/(1000*60*60*24));
+      const isOverdue=diff<0;
+      const isSoon=diff<=7;
+      const badge=isOverdue?`<span class="reminder-badge urgent">期限切れ</span>`:
+                  isSoon?`<span class="reminder-badge urgent">${diff}日後</span>`:
+                  `<span class="reminder-badge soon">${diff}日後</span>`;
+      return`<div class="reminder-row" data-action="closeSheet('reminder-sheet');setTimeout(()=>openDetail(${d.id}),300)" style="cursor:pointer">
+        <span class="reminder-icon">${fileIcon(d.fileName||d.title)}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(d.title)}</div>
+          <div style="font-size:11px;color:var(--text3)">${fmtDate(d.reminder)}</div>
+        </div>
+        ${badge}
+      </div>`;
+    }).join('<div style="height:1px;background:var(--border);margin:4px 0"></div>');
+  }
+  openSheet('reminder-sheet');
+}
+
+
+// ── Event Delegation（PWA/iPhone対応） ──
+document.addEventListener('DOMContentLoaded', ()=>{
+  // 全クリックイベントを一元管理
+  document.body.addEventListener('click', e=>{
+    const btn = e.target.closest('[data-action]');
+    if(!btn) return;
+    const action = btn.getAttribute('data-action');
+    if(!action) return;
+    try {
+      // Function コンストラクタで安全に実行
+      const fn = new Function(
+        'openSheet','closeSheet','closeAllSheets',
+        'openAdd','saveDoc','openCatSettings','closeCatSettings',
+        'saveCatSettings','addNewCat','openReminders','openCamera',
+        'closeCamera','capturePhoto','switchCamera','finishCapture',
+        'triggerFileInput','openMobileCats','mobileNavCat',
+        'setSort','saveApiKey','togglePinSetting','toggleNotifSetting',
+        'resetAllData','pinInput','pinDel','tryBiometric','openPinSetup',
+        'openFile','downloadFile','deleteDoc','openDetail','closeDetail',
+        'openCatSettings','removeCaptured','openReminders',
+        'render','checkReminders','initSettings',
+        action
+      );
+      fn(
+        openSheet, closeSheet, closeAllSheets,
+        openAdd, saveDoc, openCatSettings, closeCatSettings,
+        saveCatSettings, addNewCat, openReminders, openCamera,
+        closeCamera, capturePhoto, switchCamera, finishCapture,
+        triggerFileInput, openMobileCats, mobileNavCat,
+        setSort, saveApiKey, togglePinSetting, toggleNotifSetting,
+        resetAllData, pinInput, pinDel, tryBiometric, openPinSetup,
+        openFile, downloadFile, deleteDoc, openDetail, closeDetail,
+        openCatSettings, removeCaptured, openReminders,
+        render, checkReminders, initSettings
+      );
+    } catch(err) {
+      console.error('Action error:', action, err);
+    }
+  });
+
+  // 検索入力
+  const searchInput = document.getElementById('search-input');
+  if(searchInput) searchInput.addEventListener('input', ()=>render());
+  const searchInputField = document.getElementById('search-input-field');
+  if(searchInputField) searchInputField.addEventListener('input', ()=>render());
+});
+
 // ── PWA ──
 let deferredPrompt=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;document.getElementById('install-banner').classList.add('visible')});
@@ -881,6 +1437,9 @@ openDB().then(async()=>{
   await loadDocs();
   initDropZone();
   render();
+  initSettings();
+  checkPinOnStart();
+  setTimeout(checkReminders,500);
   if(!getKey())document.getElementById('apikey-banner').classList.add('visible');
 }).catch(e=>console.error('DB初期化エラー:',e));
 </script>
