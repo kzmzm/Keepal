@@ -12,6 +12,7 @@
 <title>書類管理</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
@@ -285,6 +286,37 @@ input,select{font-family:inherit;-webkit-appearance:none}
 .toggle.on{background:var(--accent)}
 .toggle::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
 .toggle.on::after{transform:translateX(18px)}
+
+/* ── フェーズ2: タグ・有効期限・PDF書き出し ── */
+.tag-wrap{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.tag-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);font-size:12px;color:var(--text2)}
+.tag-chip .tag-del{background:transparent;border:none;color:var(--text3);font-size:14px;line-height:1;padding:0 0 0 2px;cursor:pointer}
+.tag-chip .tag-del:active{color:var(--danger)}
+.tag-input-wrap{display:flex;gap:6px;align-items:center}
+.tag-input{flex:1;padding:8px 11px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);font-size:14px;outline:none}
+.tag-input:focus{border-color:var(--accent)}
+.tag-input::placeholder{color:var(--text3)}
+.btn-tag-add{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:500;white-space:nowrap}
+.tag-suggestions{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+.tag-sug-btn{padding:3px 10px;border-radius:20px;border:1px dashed var(--border2);background:transparent;color:var(--text3);font-size:12px}
+.tag-sug-btn:active{border-color:var(--accent);color:var(--accent)}
+
+/* 有効期限バッジ */
+.expiry-badge{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:700;flex-shrink:0}
+.expiry-badge.expired{background:#fcebeb;color:#a32d2d}
+.expiry-badge.soon{background:#faeeda;color:#854f0b}
+.expiry-badge.ok{background:#e8f0ea;color:#2d5a3d}
+
+/* PDF書き出しボタン */
+.btn-pdf-export{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:13px;color:var(--text2);flex:1;justify-content:center}
+.btn-pdf-export svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8}
+.btn-pdf-export:active{opacity:.7}
+
+/* タグフィルター */
+.tag-filter-bar{display:flex;gap:6px;overflow-x:auto;padding:8px 14px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;-webkit-overflow-scrolling:touch}
+.tag-filter-bar::-webkit-scrollbar{display:none}
+.tag-filter-chip{padding:4px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;white-space:nowrap;flex-shrink:0}
+.tag-filter-chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 </style>
 </head>
 <body>
@@ -343,6 +375,7 @@ input,select{font-family:inherit;-webkit-appearance:none}
       <button class="sort-btn" id="s-size" data-action="setSort('size')">サイズ</button>
       <span class="doc-cnt" id="doc-cnt"></span>
     </div>
+    <div class="tag-filter-bar" id="tag-filter-bar" style="display:none"></div>
     <div class="doc-list" id="doc-list"></div>
   </div>
 </div>
@@ -560,7 +593,12 @@ input,select{font-family:inherit;-webkit-appearance:none}
       <div class="d-row"><span class="d-key">サイズ</span><span class="d-val" id="d-size"></span></div>
       <div class="d-row"><span class="d-key">登録日</span><span class="d-val" id="d-created"></span></div>
       <div class="d-row"><span class="d-key">分類</span><span class="d-val" id="d-ai"></span></div>
-      <div class="d-row" id="d-reminder-row" style="display:none"><span class="d-key">⏰ 期限</span><span class="d-val" id="d-reminder"></span></div>
+      <div class="d-row" id="d-reminder-row" style="display:none"><span class="d-key">⏰ リマインダー</span><span class="d-val" id="d-reminder"></span></div>
+      <div class="d-row" id="d-expiry-row" style="display:none"><span class="d-key">📅 有効期限</span><span class="d-val" id="d-expiry"></span></div>
+    </div>
+    <div id="d-tags-sec" style="display:none">
+      <div class="d-sec-lbl">🏷️ タグ</div>
+      <div class="tag-wrap" id="d-tags-wrap"></div>
     </div>
     <div id="d-memo-sec" style="display:none">
       <div class="d-sec-lbl">メモ</div>
@@ -832,7 +870,7 @@ async function processSingleFile(file,useAI){
     cat:result?.cat||(CATS[0]?.id||'other'),
     date:result?.date||today(),amount:result?.amount||null,
     issuer:result?.issuer||'',memo:result?.memo||'',
-    reminder:'',
+    reminder:'',expiry:'',tags:[],
     created:today(),aiClassified:!!result,hasFile:true,
     fileName:file.name,fileType:file.type||'application/octet-stream',fileSize:file.size};
   await dbPut('docs',doc);
@@ -850,10 +888,16 @@ function openAdd(prefill=''){
   document.getElementById('f-issuer').value='';
   document.getElementById('f-memo').value='';
   document.getElementById('f-reminder').value='';
+  document.getElementById('f-expiry').value='';
+  currentTags=[];
   editCat=CATS[0]?.id||'other';
   renderCatPicker();
   openSheet('add-sheet');
-  setTimeout(()=>document.getElementById('f-title').focus(),300);
+  setTimeout(()=>{
+    document.getElementById('f-title').focus();
+    renderTagForm();
+    initTagInputEvents();
+  },300);
 }
 
 function renderCatPicker(){
@@ -874,6 +918,8 @@ async function saveDoc(){
     issuer:document.getElementById('f-issuer').value.trim(),
     memo:document.getElementById('f-memo').value.trim(),
     reminder:document.getElementById('f-reminder').value||'',
+    expiry:document.getElementById('f-expiry').value||'',
+    tags:[...currentTags],
     created:today(),aiClassified:false,hasFile:false,
     fileName:'',fileType:'',fileSize:0};
   await dbPut('docs',doc);
@@ -937,8 +983,9 @@ function getFiltered(){
   const q=(document.getElementById('search-input').value||'').trim().toLowerCase();
   return docs.filter(d=>{
     const catOk=activeCat==='all'||d.cat===activeCat;
-    const qOk=!q||[d.title,d.issuer,d.memo,d.fileName].some(x=>(x||'').toLowerCase().includes(q));
-    return catOk&&qOk;
+    const qOk=!q||[d.title,d.issuer,d.memo,d.fileName,...(d.tags||[])].some(x=>(x||'').toLowerCase().includes(q));
+    const tagOk=!activeTagFilter||(d.tags||[]).includes(activeTagFilter);
+    return catOk&&qOk&&tagOk;
   }).sort((a,b)=>{
     if(sortBy==='date')return(b.date||'').localeCompare(a.date||'');
     if(sortBy==='name')return(a.title||'').localeCompare(b.title||'','ja');
@@ -974,6 +1021,9 @@ function renderList(){
   list.forEach(d=>{
     const c=catMap[d.cat]||CATS[0]||{color:'#888',bg:'#eee',label:'不明'};
     const card=document.createElement('div');card.className='doc-card';card.addEventListener('click',()=>openDetail(d.id));
+    const exSt=getExpiryStatus(d.expiry);
+    const exBadge=exSt?`<span class="expiry-badge ${exSt.cls}">${exSt.label}</span>`:'';
+    const tagBadges=(d.tags||[]).slice(0,2).map(t=>`<span class="tag-chip" style="font-size:10px;padding:1px 7px">#${esc(t)}</span>`).join('');
     card.innerHTML=`
       <div class="file-icon" style="background:${c.bg}">${fileIcon(d.fileName||d.title)}</div>
       <div class="doc-info">
@@ -982,8 +1032,9 @@ function renderList(){
           <span class="doc-badge" style="background:${c.bg};color:${c.color}">${esc(c.label)}</span>
           <span class="doc-date">${fmtDate(d.date)}</span>
           ${d.fileName?`<span class="doc-size">${fileExt(d.fileName)}</span>`:''}
-          ${d.fileSize?`<span class="doc-size">${fmtBytes(d.fileSize)}</span>`:''}
           ${d.aiClassified?`<span class="ai-badge">AI</span>`:''}
+          ${exBadge}
+          ${tagBadges}
         </div>
       </div>
       ${d.amount?`<span class="doc-amount">${fmtAmt(d.amount)}</span>`:''}`;
@@ -991,7 +1042,7 @@ function renderList(){
   });
 }
 
-function render(){renderSidebar();renderList()}
+function render(){renderSidebar();renderList();renderTagFilterBar()}
 
 function initDropZone(){
   const dl=document.getElementById('doc-list');
@@ -1028,6 +1079,21 @@ function openDetail(id){
   const rrow=document.getElementById('d-reminder-row');
   if(d.reminder){rrow.style.display='flex';document.getElementById('d-reminder').textContent=fmtDate(d.reminder)}
   else rrow.style.display='none';
+  // 有効期限
+  const erow=document.getElementById('d-expiry-row');
+  if(d.expiry){
+    erow.style.display='flex';
+    const est=getExpiryStatus(d.expiry);
+    const badge=est?`<span class="expiry-badge ${est.cls}">${est.label}</span>`:'';
+    document.getElementById('d-expiry').innerHTML=fmtDate(d.expiry)+' '+badge;
+  } else erow.style.display='none';
+  // タグ
+  const tsec=document.getElementById('d-tags-sec');
+  const twrap=document.getElementById('d-tags-wrap');
+  if(d.tags&&d.tags.length>0){
+    tsec.style.display='block';
+    twrap.innerHTML=(d.tags).map(t=>`<span class="tag-chip">#${esc(t)}</span>`).join('');
+  } else tsec.style.display='none';
   openSheet('detail-sheet');
 }
 
@@ -1280,7 +1346,7 @@ async function finishCapture(){
       amount:result?.amount||null,
       issuer:result?.issuer||'',
       memo:result?.memo||(capturedImages.length>1?`${capturedImages.length}枚のスキャン`:''),
-      reminder:'',
+      reminder:'',expiry:'',tags:[],
       created:today(),aiClassified:!!result,hasFile:true,
       fileName:mainFile.name,fileType:'image/jpeg',fileSize:ab.byteLength,
       scanCount:capturedImages.length};
@@ -1416,7 +1482,217 @@ document.addEventListener('DOMContentLoaded', ()=>{
   if(searchInput) searchInput.addEventListener('input', ()=>render());
   const searchInputField = document.getElementById('search-input-field');
   if(searchInputField) searchInputField.addEventListener('input', ()=>render());
+  // ファイル操作ボタン
+  const btnOpen=document.getElementById('btn-open-file');
+  if(btnOpen) btnOpen.addEventListener('click',()=>openFile());
+  const btnDl=document.getElementById('btn-dl');
+  if(btnDl) btnDl.addEventListener('click',()=>downloadFile());
 });
+
+
+// ════════════════════════════════════════
+// ── フェーズ2: タグ・有効期限・PDF書き出し ──
+// ════════════════════════════════════════
+
+// ── タグ管理 ──
+let currentTags = [];  // フォーム編集中のタグ
+let activeTagFilter = ''; // フィルター中のタグ
+
+function getAllTags(){
+  const tagSet = new Set();
+  docs.forEach(d=>(d.tags||[]).forEach(t=>tagSet.add(t)));
+  return [...tagSet].sort();
+}
+
+function renderTagForm(){
+  // 現在のタグチップを表示
+  const wrap = document.getElementById('f-tags-wrap');
+  if(!wrap) return;
+  wrap.innerHTML = currentTags.map((t,i)=>`
+    <span class="tag-chip">
+      #${esc(t)}
+      <button class="tag-del" data-tag-del="${i}">×</button>
+    </span>`).join('');
+  wrap.querySelectorAll('[data-tag-del]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      currentTags.splice(+btn.dataset.tagDel,1);
+      renderTagForm();
+    });
+  });
+  // サジェスト（既存タグ）
+  const allTags = getAllTags().filter(t=>!currentTags.includes(t));
+  const sug = document.getElementById('tag-suggestions');
+  if(sug && allTags.length > 0){
+    sug.innerHTML = allTags.slice(0,8).map(t=>`
+      <button class="tag-sug-btn" data-sug-tag="${esc(t)}">#${esc(t)}</button>`).join('');
+    sug.querySelectorAll('[data-sug-tag]').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const tag=btn.dataset.sugTag;
+        if(!currentTags.includes(tag)){currentTags.push(tag);renderTagForm();}
+      });
+    });
+  } else if(sug){
+    sug.innerHTML='';
+  }
+}
+
+function addTagFromInput(){
+  const input = document.getElementById('f-tag-input');
+  if(!input) return;
+  const val = input.value.trim().replace(/^#+/,'');
+  if(val && !currentTags.includes(val) && currentTags.length < 10){
+    currentTags.push(val);
+    renderTagForm();
+  }
+  input.value='';
+  input.focus();
+}
+
+function initTagInputEvents(){
+  const input = document.getElementById('f-tag-input');
+  const btn = document.getElementById('btn-tag-add');
+  if(input){
+    input.addEventListener('keydown', e=>{
+      if(e.key==='Enter'){e.preventDefault();addTagFromInput();}
+    });
+  }
+  if(btn){
+    btn.addEventListener('click', ()=>addTagFromInput());
+  }
+}
+
+// ── タグフィルターバー ──
+function renderTagFilterBar(){
+  const allTags = getAllTags();
+  const bar = document.getElementById('tag-filter-bar');
+  if(!bar) return;
+  if(allTags.length === 0){bar.style.display='none';return;}
+  bar.style.display='flex';
+  bar.innerHTML = [
+    `<button class="tag-filter-chip ${!activeTagFilter?'active':''}" data-filter-tag="">すべて</button>`,
+    ...allTags.map(t=>`<button class="tag-filter-chip ${activeTagFilter===t?'active':''}" data-filter-tag="${esc(t)}">#${esc(t)}</button>`)
+  ].join('');
+  bar.querySelectorAll('[data-filter-tag]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      activeTagFilter=btn.dataset.filterTag;
+      renderTagFilterBar();
+      renderList();
+    });
+  });
+}
+
+// ── 有効期限 ──
+function getExpiryStatus(expiry){
+  if(!expiry) return null;
+  const now = new Date();
+  const exp = new Date(expiry);
+  const diff = Math.ceil((exp - now)/(1000*60*60*24));
+  if(diff < 0) return {label:'期限切れ', cls:'expired'};
+  if(diff <= 30) return {label:`${diff}日後`, cls:'soon'};
+  if(diff <= 90) return {label:`${diff}日後`, cls:'ok'};
+  return null; // 余裕あり→バッジ不要
+}
+
+// ── PDF書き出し ──
+async function exportToPdf(){
+  if(!selectedId) return;
+  const doc = docs.find(d=>d.id===selectedId);
+  if(!doc){return;}
+
+  showToast('PDFを生成中…');
+
+  try{
+    const {jsPDF} = window.jspdf;
+    const pdf = new jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
+
+    // フォント設定（日本語対応のためBase64フォントは省略、英数字のみ）
+    // ヘッダー
+    pdf.setFillColor(45, 90, 61);
+    pdf.rect(0, 0, 210, 24, 'F');
+    pdf.setTextColor(255,255,255);
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica','bold');
+    pdf.text('Document Report', 14, 10);
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica','normal');
+    pdf.text(new Date().toLocaleDateString('ja-JP'), 14, 17);
+
+    // タイトル（日本語はunescape等で対処）
+    pdf.setTextColor(26,26,24);
+    pdf.setFontSize(18);
+    pdf.setFont('helvetica','bold');
+    // 日本語をローマ字で代替（jsPDFは日本語フォント別途必要）
+    const titleSafe = doc.title.replace(/[^ -]/g, '?');
+    pdf.text(titleSafe.substring(0,40), 14, 38);
+
+    // 区切り線
+    pdf.setDrawColor(228,226,218);
+    pdf.line(14, 44, 196, 44);
+
+    // 詳細情報テーブル
+    const c = catMap[doc.cat]||{label:'Other'};
+    const rows = [
+      ['Category', c.label.replace(/[^ -]/g,'?')],
+      ['Date', fmtDate(doc.date)],
+      ['Amount', doc.amount ? '¥'+doc.amount.toLocaleString() : '-'],
+      ['Issuer', (doc.issuer||'-').replace(/[^ -]/g,'?')],
+      ['Expiry', doc.expiry ? fmtDate(doc.expiry) : '-'],
+      ['Registered', fmtDate(doc.created)],
+      ['Classification', doc.aiClassified ? 'AI Auto' : 'Manual'],
+      ['Tags', (doc.tags||[]).join(', ')||'-'],
+      ['Memo', (doc.memo||'-').replace(/[^ -]/g,'?')],
+    ];
+
+    let y = 52;
+    rows.forEach(([key, val], i)=>{
+      if(i % 2 === 0) {pdf.setFillColor(247,246,243);pdf.rect(14,y-5,182,9,'F');}
+      pdf.setFont('helvetica','bold');pdf.setFontSize(9);pdf.setTextColor(107,104,96);
+      pdf.text(key, 16, y);
+      pdf.setFont('helvetica','normal');pdf.setTextColor(26,26,24);
+      pdf.text(String(val).substring(0,60), 60, y);
+      y += 10;
+    });
+
+    // 添付ファイルが画像の場合は埋め込む
+    if(doc.hasFile && doc.fileType && doc.fileType.startsWith('image/')){
+      try{
+        const rec = await dbGet('files', doc.id);
+        if(rec){
+          const blob = new Blob([rec.data], {type: rec.type});
+          const imgUrl = URL.createObjectURL(blob);
+          // 画像を埋め込み
+          const img = new Image();
+          await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=imgUrl;});
+          const ratio = img.width / img.height;
+          const imgW = Math.min(160, img.width * 0.264583);
+          const imgH = imgW / ratio;
+          if(y + imgH + 20 > 280){pdf.addPage();y=20;}
+          y += 8;
+          pdf.setFontSize(10);pdf.setFont('helvetica','bold');pdf.setTextColor(45,90,61);
+          pdf.text('Attached Image', 14, y);
+          y += 6;
+          pdf.addImage(imgUrl, rec.type.includes('png')?'PNG':'JPEG', 14, y, imgW, imgH);
+          URL.revokeObjectURL(imgUrl);
+        }
+      }catch(e){console.warn('画像埋め込みエラー:',e);}
+    }
+
+    // フッター
+    pdf.setFontSize(8);pdf.setTextColor(160,157,148);
+    pdf.text('Generated by Keepal', 14, 290);
+    pdf.text(new Date().toLocaleString('ja-JP'), 140, 290);
+
+    // 保存
+    const filename = `${titleSafe.substring(0,30).trim()||'document'}_${today()}.pdf`;
+    pdf.save(filename);
+    hideToast();
+    toastDone('PDFを書き出しました');
+  }catch(e){
+    hideToast();
+    console.error('PDF生成エラー:', e);
+    alert('PDF生成に失敗しました: '+e.message);
+  }
+}
 
 // ── PWA ──
 let deferredPrompt=null;
