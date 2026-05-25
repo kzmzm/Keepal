@@ -1269,8 +1269,7 @@ async function startCamera(){
     });
     document.getElementById('cam-video').srcObject=camStream;
   }catch(e){
-    alert('カメラへのアクセスが許可されていません。
-ブラウザの設定からカメラを許可してください。');
+    alert('カメラへのアクセスが許可されていません。ブラウザの設定からカメラを許可してください。');
     closeCamera();
   }
 }
