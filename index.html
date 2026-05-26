@@ -1621,7 +1621,7 @@ async function exportToPdf(){
     pdf.setFontSize(18);
     pdf.setFont('helvetica','bold');
     // 日本語をローマ字で代替（jsPDFは日本語フォント別途必要）
-    const titleSafe = doc.title.replace(/[^ -]/g, '?');
+    const titleSafe = doc.title.replace(/[^\u0000-\u007F]/g, '?');
     pdf.text(titleSafe.substring(0,40), 14, 38);
 
     // 区切り線
@@ -1631,15 +1631,15 @@ async function exportToPdf(){
     // 詳細情報テーブル
     const c = catMap[doc.cat]||{label:'Other'};
     const rows = [
-      ['Category', c.label.replace(/[^ -]/g,'?')],
+      ['Category', c.label.replace(/[^\u0000-\u007F]/g,'?')],
       ['Date', fmtDate(doc.date)],
       ['Amount', doc.amount ? '¥'+doc.amount.toLocaleString() : '-'],
-      ['Issuer', (doc.issuer||'-').replace(/[^ -]/g,'?')],
+      ['Issuer', (doc.issuer||'-').replace(/[^\u0000-\u007F]/g,'?')],
       ['Expiry', doc.expiry ? fmtDate(doc.expiry) : '-'],
       ['Registered', fmtDate(doc.created)],
       ['Classification', doc.aiClassified ? 'AI Auto' : 'Manual'],
       ['Tags', (doc.tags||[]).join(', ')||'-'],
-      ['Memo', (doc.memo||'-').replace(/[^ -]/g,'?')],
+      ['Memo', (doc.memo||'-').replace(/[^\u0000-\u007F]/g,'?')],
     ];
 
     let y = 52;
